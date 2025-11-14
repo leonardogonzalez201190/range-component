@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { EditableRangeLabel } from "./EditableRangeLabel";
 
-interface DualRangeProps {
+interface RangeProps {
   min?: number;
   max?: number;
   values?: number[];
@@ -12,7 +12,7 @@ interface DualRangeProps {
   onChange?: (min: number, max: number) => void;
 }
 
-export const DualRange: React.FC<DualRangeProps> = ({
+export const Range: React.FC<RangeProps> = ({
   min = 0,
   max = 100,
   values,
