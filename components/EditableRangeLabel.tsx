@@ -58,6 +58,7 @@ export const EditableRangeLabel: React.FC<EditableRangeLabelProps> = ({
             className="flex flex-col items-start">
             {!editing ? (
                 <span
+                    aria-label="editable-value"
                     className={clsx(
                         "cursor-pointer text-gray-700 font-medium",
                         kind === "min" ? "text-right" : "text-left"
