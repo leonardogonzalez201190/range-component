@@ -4,11 +4,10 @@ export const dynamic = 'force-dynamic';
 
 export default async function Page() {
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/random-range`);
-  const values = await res.json()
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/range-values`);
+  const values = await res.json();
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
       <div className="w-full max-w-md mx-auto p-6">
         <Range
           min={values.rangeValues[0]}
@@ -19,6 +18,5 @@ export default async function Page() {
           unit="€"
         />
       </div>
-    </div>
   )
 }
