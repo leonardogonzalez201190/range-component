@@ -68,7 +68,7 @@ export const Range: React.FC<RangeProps> = ({
       pos = Math.max(0, Math.min(100, pos));
 
       let value = min + (pos / 100) * (max - min);
-      
+
       // if values are provided, get the closest value
       if (values) {
         value = getClosestValue(e.clientX);
@@ -131,13 +131,13 @@ export const Range: React.FC<RangeProps> = ({
         />
 
         <div
-          className={`absolute w-5 h-5 bg-gray-700 rounded-full cursor-pointer -translate-x-1/2 -translate-y-1/2 hover:scale-125 transition-transform`}
+          className={`absolute w-5 h-5 bg-gray-700 rounded-full -translate-x-1/2 -translate-y-1/2 transition-transform ${activeThumb === "min" ? "scale-150 cursor-grabbing" : "cursor-grab hover:scale-125"}`}
           style={{ left: `${minPosition}%`, top: "50%" }}
           onMouseDown={() => handleMouseDown("min")}
         />
 
         <div
-          className={`absolute w-5 h-5 bg-gray-700 rounded-full cursor-pointer -translate-x-1/2 -translate-y-1/2 hover:scale-125 transition-transform`}
+          className={`absolute w-5 h-5 bg-gray-700 rounded-full -translate-x-1/2 -translate-y-1/2 transition-transform ${activeThumb === "max" ? "scale-150 cursor-grabbing" : "cursor-grab hover:scale-125"}`}
           style={{ left: `calc(100% - ${maxPosition}%)`, top: "50%" }}
           onMouseDown={() => handleMouseDown("max")}
         />
