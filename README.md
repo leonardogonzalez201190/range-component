@@ -31,7 +31,7 @@ bun install
 Create a `.env` file in the root directory with the following variables:
 
 ```
-NEXT_PUBLIC_API_URL=http://localhost:3000/api
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
 ```
 
 ## Component Props
@@ -51,7 +51,8 @@ The `DualRange` component accepts the following props:
 ## Usage Example
 
 ```tsx
-import { DualRange } from './components/Range';
+"use client";
+import { Range } from './components/Range';
 
 function App() {
   const handleRangeChange = (min: number, max: number) => {
@@ -60,7 +61,7 @@ function App() {
 
   return (
     <div>
-      <DualRange 
+      <Range 
         min={0}
         max={1000}
         initialMin={300}
