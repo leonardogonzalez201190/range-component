@@ -5,6 +5,7 @@ import { EditableRangeLabel } from "./EditableRangeLabel";
 interface DualRangeProps {
   min?: number;
   max?: number;
+  values?: number[];
   initialMin?: number;
   initialMax?: number;
   unit?: string;
@@ -14,14 +15,15 @@ interface DualRangeProps {
 export const DualRange: React.FC<DualRangeProps> = ({
   min = 0,
   max = 100,
+  values,
   initialMin = 30,
   initialMax = 70,
   unit = "$",
   onChange,
 }) => {
 
-  const [minVal, setMinVal] = useState(initialMin);
-  const [maxVal, setMaxVal] = useState(initialMax);
+  const [minVal, setMinVal] = useState(initialMin ?? values?.[0]);
+  const [maxVal, setMaxVal] = useState(initialMax ?? values?.[values?.length - 1]);
   const [activeThumb, setActiveThumb] = useState<"min" | "max" | null>(null);
   const rangeRef = useRef<HTMLDivElement>(null);
 
@@ -41,6 +43,17 @@ export const DualRange: React.FC<DualRangeProps> = ({
     onChange?.(minVal, clampedValue);
   };
 
+
+  const getClosestValue = (clientX: number) => {
+    if (!values) return minVal;
+    if (!rangeRef.current) return minVal;
+
+    const { left, width } = rangeRef.current.getBoundingClientRect();
+    const percent = (clientX - left) / width;
+    const index = Math.round(percent * (values.length - 1));
+    return values[Math.max(0, Math.min(values.length - 1, index))];
+  };
+
   useEffect(() => {
     if (!activeThumb) return;
 
@@ -54,7 +67,12 @@ export const DualRange: React.FC<DualRangeProps> = ({
       let pos = ((e.clientX - start) / width) * 100;
       pos = Math.max(0, Math.min(100, pos));
 
-      const value = min + (pos / 100) * (max - min);
+      let value = min + (pos / 100) * (max - min);
+      
+      // if values are provided, get the closest value
+      if (values) {
+        value = getClosestValue(e.clientX);
+      }
 
       if (activeThumb === "min") {
         if (value >= maxVal) {
@@ -95,6 +113,7 @@ export const DualRange: React.FC<DualRangeProps> = ({
     <div className="w-full flex items-center gap-2">
       <span className="w-20 flex justify-end">
         <EditableRangeLabel
+          readOnly={values !== undefined}
           value={minVal}
           unit={unit}
           kind="min"
@@ -126,6 +145,7 @@ export const DualRange: React.FC<DualRangeProps> = ({
 
       <span className="w-20">
         <EditableRangeLabel
+          readOnly={values !== undefined}
           value={maxVal}
           unit={unit}
           kind="max"

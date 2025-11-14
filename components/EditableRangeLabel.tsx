@@ -10,6 +10,7 @@ interface EditableRangeLabelProps {
     minLimit?: number; // minimum limit allowed
     maxLimit?: number; // maximum limit allowed
 
+    readOnly?: boolean;
     onChange: (newValue: number) => void;
 }
 
@@ -19,6 +20,7 @@ export const EditableRangeLabel: React.FC<EditableRangeLabelProps> = ({
     kind,
     minLimit,
     maxLimit,
+    readOnly,
     onChange,
 }) => {
     const [editing, setEditing] = useState(false);
@@ -61,6 +63,7 @@ export const EditableRangeLabel: React.FC<EditableRangeLabelProps> = ({
                         kind === "min" ? "text-right" : "text-left"
                     )}
                     onClick={() => {
+                        if (readOnly) return;
                         setTempValue(value);
                         setEditing(true);
                     }}

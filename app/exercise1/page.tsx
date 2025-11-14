@@ -1,15 +1,21 @@
 import { DualRange } from "@/components/Range";
 
 
-export default function Page() {
+export default async function Page() {
+
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/random-range`);
+  const data = await res.json();
+
+  const { min, max } = data;
+
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-full max-w-md mx-auto p-6">
         <DualRange
-          min={1}
-          max={10000}
-          initialMin={999}
-          initialMax={10000}
+          min={min}
+          max={max}
+          initialMin={min}
+          initialMax={max}
           unit="€"
         />
       </div>

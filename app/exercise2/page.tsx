@@ -1,16 +1,23 @@
 import { DualRange } from "@/components/Range";
 
 
-export default function Page() {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
+export default async function Page() {
+
+  const res = await fetch("http://localhost:3000/api/range-values")
+  const values = await res.json()
+
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-full max-w-md mx-auto p-6">
         <DualRange
-          min={0}
-          max={100}
-          step={1}
-          initialMin={30}
-          initialMax={70}
+          min={values.rangeValues[0]}
+          max={values.rangeValues[values.rangeValues.length - 1]}
+          values={values.rangeValues}
+          initialMin={values.rangeValues[0]}
+          initialMax={values.rangeValues[values.rangeValues.length - 1]}
+          unit="€"
         />
       </div>
-    )
+    </div>
+  )
 }
