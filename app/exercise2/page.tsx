@@ -1,5 +1,6 @@
 import { Range } from "@/components/Range";
 
+export const dynamic = 'force-dynamic';
 
 export default async function Page() {
 
