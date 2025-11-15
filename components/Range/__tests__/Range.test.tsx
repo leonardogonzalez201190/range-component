@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { Range } from "../Range";
+import { Range } from "..";
 
 describe("Range component", () => {
   it("renders initial min and max labels", () => {
