@@ -12,6 +12,54 @@ interface RangeProps {
   onChange?: (min: number, max: number) => void;
 }
 
+const validateProps = ({
+  min = 0,
+  max = 100,
+  initialMin = 0,
+  initialMax = 100,
+  values,
+}: RangeProps): string[] => {
+  const errors: string[] = [];
+
+  if (min > max) {
+    errors.push("Minimum value cannot be greater than maximum value.");
+    return errors; // Early return as other checks won't be valid
+  }
+
+  if (initialMin < min || initialMin > max) {
+    errors.push(`initialMin must be between ${min} and ${max}.`);
+  }
+
+  if (initialMax < min || initialMax > max) {
+    errors.push(`initialMax must be between ${min} and ${max}.`);
+  }
+
+  if (initialMin > initialMax) {
+    errors.push("initialMin cannot be greater than initialMax.");
+  }
+
+  if (values) {
+    if (values.length < 2) {
+      errors.push("The values list must contain at least 2 elements.");
+    } else {
+      if (values.some(v => v < min || v > max)) {
+        errors.push("All values in 'values' must be within the [min, max] range.");
+      }
+
+      if (!values.includes(initialMin)) {
+        errors.push("initialMin must exist in 'values'.");
+      }
+
+      if (!values.includes(initialMax)) {
+        errors.push("initialMax must exist in 'values'.");
+      }
+    }
+  }
+
+  return errors;
+};
+
+
 export const Range: React.FC<RangeProps> = ({
   min = 0,
   max = 100,
@@ -21,9 +69,27 @@ export const Range: React.FC<RangeProps> = ({
   unit = "$",
   onChange,
 }) => {
-
-  const [minVal, setMinVal] = useState(initialMin ?? values?.[0]);
-  const [maxVal, setMaxVal] = useState(initialMax ?? values?.[values?.length - 1]);
+  
+  // Validate props and show errors in console
+  const validationErrors = validateProps({ min, max, values, initialMin, initialMax });
+  // Ensure we have valid initial values
+  const safeInitialMin = values ? Math.max(min, Math.min(initialMin, max)) : initialMin;
+  const safeInitialMax = values ? Math.max(min, Math.min(initialMax, max)) : initialMax;
+  
+  const [minVal, setMinVal] = useState<number>(() => {
+    if (values && values.length > 0) {
+      return values.includes(initialMin) ? initialMin : values[0];
+    }
+    return safeInitialMin;
+  });
+  
+  const [maxVal, setMaxVal] = useState<number>(() => {
+    if (values && values.length > 0) {
+      const lastValue = values[values.length - 1];
+      return values.includes(initialMax) ? initialMax : lastValue;
+    }
+    return safeInitialMax;
+  });
   const [activeThumb, setActiveThumb] = useState<"min" | "max" | null>(null);
   const rangeRef = useRef<HTMLDivElement>(null);
 
@@ -43,14 +109,13 @@ export const Range: React.FC<RangeProps> = ({
     onChange?.(minVal, clampedValue);
   };
 
-  const getClosestValue = (clientX: number) => {
-    if (!values) return minVal;
-    if (!rangeRef.current) return minVal;
+  const getClosestValue = (clientX: number): number => {
+    if (!values || !rangeRef.current) return minVal;
 
     const { left, width } = rangeRef.current.getBoundingClientRect();
-    const percent = (clientX - left) / width;
+    const percent = Math.max(0, Math.min(1, (clientX - left) / width));
     const index = Math.round(percent * (values.length - 1));
-    return values[Math.max(0, Math.min(values.length - 1, index))];
+    return values[Math.max(0, Math.min(values.length - 1, index))] ?? minVal;
   };
 
   useEffect(() => {
@@ -104,7 +169,8 @@ export const Range: React.FC<RangeProps> = ({
 
   const getPosition = (value: number): number => {
     if (!values || values.length < 2) {
-      return ((value - min) / (max - min)) * 100;
+      const range = max - min;
+      return range === 0 ? 0 : ((value - min) / range) * 100;
     }
     const index = values.indexOf(value);
     if (index === -1) return 0;
@@ -136,23 +202,24 @@ export const Range: React.FC<RangeProps> = ({
     };
 
     const discreteApply = (newIndex: number) => {
-      // --> change: compare indices
-      const clampedIndex = Math.max(0, Math.min(values!.length - 1, newIndex));
-      const newValue = values![clampedIndex];
+      if (!values) return;
+      
+      const clampedIndex = Math.max(0, Math.min(values.length - 1, newIndex));
+      const newValue = values[clampedIndex];
 
       // current index of the opposite limit (robust against missing values)
       const maxIndex = (() => {
-        const mi = values!.indexOf(maxVal);
+        const mi = values.indexOf(maxVal);
         if (mi !== -1) return mi;
-        const f = values!.findIndex(v => v >= maxVal);
-        return f !== -1 ? f : values!.length - 1;
+        const f = values.findIndex(v => v >= maxVal);
+        return f !== -1 ? f : values.length - 1;
       })();
 
       const minIndex = (() => {
-        const mi = values!.indexOf(minVal);
+        const mi = values.indexOf(minVal);
         if (mi !== -1) return mi;
-        const f = values!.findIndex(v => v >= minVal);
-        return f !== -1 ? f : values!.length - 1;
+        const f = values.findIndex(v => v >= minVal);
+        return f !== -1 ? f : values.length - 1;
       })();
 
       if (isMin) {
@@ -229,8 +296,32 @@ export const Range: React.FC<RangeProps> = ({
     }
   };
 
+  if (validationErrors.length > 0) {
+    return (
+      <div className="w-full flex items-center justify-center cursor-pointer">
+        <div className="relative inline-block group">
+          <div className="px-3 py-1.5 text-center text-red-700 rounded-md text-sm flex items-center">
+            <span>⚠️ {validationErrors.length} validation error{validationErrors.length > 1 ? 's' : ''} found</span>
+            <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="hidden group-hover:block absolute z-10 p-2 mt-1 text-sm bg-white border border-gray-200 rounded-md shadow-lg">
+            <div className="text-red-700 font-medium mb-1">Validation Errors:</div>
+            <ul className="list-disc pl-5 space-y-1">
+              {validationErrors.map((error, index) => (
+                <li key={index} className="text-gray-800 whitespace-nowrap">{error}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full flex items-center gap-2">
+    <div className="w-full flex flex-col gap-4">
+      <div className="w-full flex items-center gap-2">
       <span className="w-20 flex justify-end">
         <EditableRangeLabel
           readOnly={values !== undefined}
@@ -292,6 +383,8 @@ export const Range: React.FC<RangeProps> = ({
           onChange={handleMaxChange}
         />
       </span>
+      </div>
+
     </div>
   );
 };
