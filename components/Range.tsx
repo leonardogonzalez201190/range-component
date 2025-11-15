@@ -43,7 +43,6 @@ export const Range: React.FC<RangeProps> = ({
     onChange?.(minVal, clampedValue);
   };
 
-
   const getClosestValue = (clientX: number) => {
     if (!values) return minVal;
     if (!rangeRef.current) return minVal;
@@ -103,7 +102,6 @@ export const Range: React.FC<RangeProps> = ({
     };
   }, [activeThumb, min, max, minVal, maxVal, onChange]);
 
-
   const getPosition = (value: number): number => {
     if (!values || values.length < 2) {
       return ((value - min) / (max - min)) * 100;
@@ -113,7 +111,6 @@ export const Range: React.FC<RangeProps> = ({
     return (index / (values.length - 1)) * 100;
   };
 
-  // FIX: compute both as straight percentages
   const minPosition = getPosition(minVal);
   const maxPosition = getPosition(maxVal);
 
@@ -124,82 +121,113 @@ export const Range: React.FC<RangeProps> = ({
     const isMin = thumb === "min";
     const current = isMin ? minVal : maxVal;
 
-    // for continuous: step at least 1
-    const continuousStep = Math.max(1, Math.round((max - min) / 100));
-    const continuousBigStep = Math.max(1, Math.round((max - min) / 10));
+    const continuousStep = Math.max(1, Math.round((max - min) * 0.02));
+    const continuousBigStep = Math.max(1, Math.round((max - min) * 0.1));
 
-    // for discrete: move by indices within the array
     const discreteStep = 1;
     const discreteBigStep = Math.max(1, Math.round((values?.length ?? 2) * 0.1));
 
-    const applyContinuous = (v: number) => {
-      if (isMin) handleMinChange(v);
-      else handleMaxChange(v);
+    const getDiscreteIndex = () => {
+      if (!values) return 0;
+      const rawIndex = values.indexOf(current);
+      if (rawIndex !== -1) return rawIndex;
+      const fallbackIndex = values.findIndex(v => v >= current);
+      return fallbackIndex !== -1 ? fallbackIndex : values.length - 1;
     };
 
-    const applyDiscreteByIndex = (idx: number) => {
-      const clampedIndex = Math.max(0, Math.min((values!.length - 1), idx));
-      const v = values![clampedIndex];
-      if (isMin) handleMinChange(v);
-      else handleMaxChange(v);
+    const discreteApply = (newIndex: number) => {
+      // --> change: compare indices
+      const clampedIndex = Math.max(0, Math.min(values!.length - 1, newIndex));
+      const newValue = values![clampedIndex];
+
+      // current index of the opposite limit (robust against missing values)
+      const maxIndex = (() => {
+        const mi = values!.indexOf(maxVal);
+        if (mi !== -1) return mi;
+        const f = values!.findIndex(v => v >= maxVal);
+        return f !== -1 ? f : values!.length - 1;
+      })();
+
+      const minIndex = (() => {
+        const mi = values!.indexOf(minVal);
+        if (mi !== -1) return mi;
+        const f = values!.findIndex(v => v >= minVal);
+        return f !== -1 ? f : values!.length - 1;
+      })();
+
+      if (isMin) {
+        // minIndex must always be strictly LESS than maxIndex
+        if (clampedIndex >= maxIndex) return;
+        handleMinChange(newValue);
+      } else {
+        // maxIndex must always be strictly GREATER than minIndex
+        if (clampedIndex <= minIndex) return;
+        handleMaxChange(newValue);
+      }
+    };
+
+    const continuousApply = (newValue: number) => {
+      if (isMin) {
+        if (newValue > maxVal) return;
+        handleMinChange(newValue);
+      } else {
+        if (newValue < minVal) return;
+        handleMaxChange(newValue);
+      }
     };
 
     switch (e.key) {
       case "ArrowLeft":
       case "ArrowDown": {
         if (values && values.length) {
-          // discrete: find current index and decrease
-          const idx = Math.max(0, values.indexOf(current));
+          const idx = getDiscreteIndex();
           const step = e.shiftKey ? discreteBigStep : discreteStep;
-          applyDiscreteByIndex(idx - step);
+          discreteApply(idx - step);
         } else {
           const step = e.shiftKey ? continuousBigStep : continuousStep;
-          applyContinuous(current - step);
+          continuousApply(current - step);
         }
         e.preventDefault();
-        break;
+        return;
       }
 
       case "ArrowRight":
       case "ArrowUp": {
         if (values && values.length) {
-          const idx = Math.max(0, values.indexOf(current));
+          const idx = getDiscreteIndex();
           const step = e.shiftKey ? discreteBigStep : discreteStep;
-          applyDiscreteByIndex(idx + step);
+          discreteApply(idx + step);
         } else {
           const step = e.shiftKey ? continuousBigStep : continuousStep;
-          applyContinuous(current + step);
+          continuousApply(current + step);
         }
         e.preventDefault();
-        break;
+        return;
       }
 
-      case "Home": {
-        if (isMin) {
-          if (values && values.length) applyDiscreteByIndex(0);
-          else applyContinuous(min);
+      case "Home":
+        if (values && values.length) {
+          if (isMin) discreteApply(0);
+          else discreteApply(values.length - 1);
         } else {
-          if (values && values.length) applyDiscreteByIndex(values.length - 1);
-          else applyContinuous(max);
+          if (isMin) continuousApply(min);
+          else continuousApply(max);
         }
         e.preventDefault();
-        break;
-      }
+        return;
 
-      case "End": {
-        if (isMin) {
-          if (values && values.length) applyDiscreteByIndex(values.length - 1);
-          else applyContinuous(max);
+      case "End":
+        if (values && values.length) {
+          if (isMin) discreteApply(values.length - 1);
+          else discreteApply(0);
         } else {
-          if (values && values.length) applyDiscreteByIndex(0);
-          else applyContinuous(min);
+          if (isMin) continuousApply(max);
+          else continuousApply(min);
         }
         e.preventDefault();
-        break;
-      }
+        return;
     }
   };
-
 
   return (
     <div className="w-full flex items-center gap-2">
@@ -268,14 +296,13 @@ export const Range: React.FC<RangeProps> = ({
   );
 };
 
-
 export function SkeletonRange() {
   return (
     <div className="relative animate-pulse mx-14 p-2">
-      <div className="h-1.5 w-full bg-gray-300 rounded"></div>
+      <div className="h-1.5 w-full bg-gray-300 rounded" />
       <div className="w-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex justify-between">
-        <div className="size-6 bg-gray-300 rounded-full"></div>
-        <div className="size-6 bg-gray-300 rounded-full"></div>
+        <div className="size-6 bg-gray-300 rounded-full" />
+        <div className="size-6 bg-gray-300 rounded-full" />
       </div>
     </div>
   );
