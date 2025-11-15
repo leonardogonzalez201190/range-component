@@ -69,10 +69,7 @@ export const Range: React.FC<RangeProps> = ({
 
       let value = min + (pos / 100) * (max - min);
 
-      // if values are provided, get the closest value
-      if (values) {
-        value = getClosestValue(e.clientX);
-      }
+      if (values) value = getClosestValue(e.clientX);
 
       if (activeThumb === "min") {
         if (value >= maxVal) {
@@ -108,19 +105,101 @@ export const Range: React.FC<RangeProps> = ({
 
 
   const getPosition = (value: number): number => {
-    // Case one: no values → use continuous range
     if (!values || values.length < 2) {
       return ((value - min) / (max - min)) * 100;
     }
-
-    // Case two: values → discrete position based on index
     const index = values.indexOf(value);
-    if (index === -1) return 0; // fallback
+    if (index === -1) return 0;
     return (index / (values.length - 1)) * 100;
   };
 
+  // FIX: compute both as straight percentages
   const minPosition = getPosition(minVal);
-  const maxPosition = 100 - getPosition(maxVal);
+  const maxPosition = getPosition(maxVal);
+
+  const handleKey = (
+    e: React.KeyboardEvent,
+    thumb: "min" | "max"
+  ) => {
+    const isMin = thumb === "min";
+    const current = isMin ? minVal : maxVal;
+
+    // for continuous: step at least 1
+    const continuousStep = Math.max(1, Math.round((max - min) / 100));
+    const continuousBigStep = Math.max(1, Math.round((max - min) / 10));
+
+    // for discrete: move by indices within the array
+    const discreteStep = 1;
+    const discreteBigStep = Math.max(1, Math.round((values?.length ?? 2) * 0.1));
+
+    const applyContinuous = (v: number) => {
+      if (isMin) handleMinChange(v);
+      else handleMaxChange(v);
+    };
+
+    const applyDiscreteByIndex = (idx: number) => {
+      const clampedIndex = Math.max(0, Math.min((values!.length - 1), idx));
+      const v = values![clampedIndex];
+      if (isMin) handleMinChange(v);
+      else handleMaxChange(v);
+    };
+
+    switch (e.key) {
+      case "ArrowLeft":
+      case "ArrowDown": {
+        if (values && values.length) {
+          // discrete: find current index and decrease
+          const idx = Math.max(0, values.indexOf(current));
+          const step = e.shiftKey ? discreteBigStep : discreteStep;
+          applyDiscreteByIndex(idx - step);
+        } else {
+          const step = e.shiftKey ? continuousBigStep : continuousStep;
+          applyContinuous(current - step);
+        }
+        e.preventDefault();
+        break;
+      }
+
+      case "ArrowRight":
+      case "ArrowUp": {
+        if (values && values.length) {
+          const idx = Math.max(0, values.indexOf(current));
+          const step = e.shiftKey ? discreteBigStep : discreteStep;
+          applyDiscreteByIndex(idx + step);
+        } else {
+          const step = e.shiftKey ? continuousBigStep : continuousStep;
+          applyContinuous(current + step);
+        }
+        e.preventDefault();
+        break;
+      }
+
+      case "Home": {
+        if (isMin) {
+          if (values && values.length) applyDiscreteByIndex(0);
+          else applyContinuous(min);
+        } else {
+          if (values && values.length) applyDiscreteByIndex(values.length - 1);
+          else applyContinuous(max);
+        }
+        e.preventDefault();
+        break;
+      }
+
+      case "End": {
+        if (isMin) {
+          if (values && values.length) applyDiscreteByIndex(values.length - 1);
+          else applyContinuous(max);
+        } else {
+          if (values && values.length) applyDiscreteByIndex(0);
+          else applyContinuous(min);
+        }
+        e.preventDefault();
+        break;
+      }
+    }
+  };
+
 
   return (
     <div className="w-full flex items-center gap-2">
@@ -140,18 +219,36 @@ export const Range: React.FC<RangeProps> = ({
 
         <div
           className="absolute h-full bg-gray-700 rounded-full"
-          style={{ left: `${minPosition}%`, right: `${maxPosition}%` }}
+          style={{ left: `${minPosition}%`, right: `${100 - maxPosition}%` }}
         />
 
+        {/* THUMB MIN */}
         <div
-          className={`absolute w-5 h-5 bg-gray-700 rounded-full -translate-x-1/2 -translate-y-1/2 transition-transform ${activeThumb === "min" ? "scale-150 cursor-grabbing" : "cursor-grab hover:scale-125"}`}
+          role="slider"
+          tabIndex={0}
+          aria-label="Minimum value"
+          aria-valuemin={min}
+          aria-valuemax={maxVal}
+          aria-valuenow={minVal}
+          onKeyDown={(e) => handleKey(e, "min")}
+          className={`absolute w-5 h-5 bg-gray-700 rounded-full -translate-x-1/2 -translate-y-1/2 transition-transform 
+            ${activeThumb === "min" ? "scale-150 cursor-grabbing" : "cursor-grab hover:scale-125"}`}
           style={{ left: `${minPosition}%`, top: "50%" }}
           onMouseDown={() => handleMouseDown("min")}
         />
 
+        {/* THUMB MAX */}
         <div
-          className={`absolute w-5 h-5 bg-gray-700 rounded-full -translate-x-1/2 -translate-y-1/2 transition-transform ${activeThumb === "max" ? "scale-150 cursor-grabbing" : "cursor-grab hover:scale-125"}`}
-          style={{ left: `calc(100% - ${maxPosition}%)`, top: "50%" }}
+          role="slider"
+          tabIndex={0}
+          aria-label="Maximum value"
+          aria-valuemin={minVal}
+          aria-valuemax={max}
+          aria-valuenow={maxVal}
+          onKeyDown={(e) => handleKey(e, "max")}
+          className={`absolute w-5 h-5 bg-gray-700 rounded-full -translate-x-1/2 -translate-y-1/2 transition-transform 
+            ${activeThumb === "max" ? "scale-150 cursor-grabbing" : "cursor-grab hover:scale-125"}`}
+          style={{ left: `${maxPosition}%`, top: "50%" }}
           onMouseDown={() => handleMouseDown("max")}
         />
       </div>
