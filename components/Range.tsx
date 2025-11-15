@@ -106,8 +106,21 @@ export const Range: React.FC<RangeProps> = ({
     };
   }, [activeThumb, min, max, minVal, maxVal, onChange]);
 
-  const minPosition = ((minVal - min) / (max - min)) * 100;
-  const maxPosition = 100 - ((maxVal - min) / (max - min)) * 100;
+
+  const getPosition = (value: number): number => {
+    // Case one: no values → use continuous range
+    if (!values || values.length < 2) {
+      return ((value - min) / (max - min)) * 100;
+    }
+
+    // Case two: values → discrete position based on index
+    const index = values.indexOf(value);
+    if (index === -1) return 0; // fallback
+    return (index / (values.length - 1)) * 100;
+  };
+
+  const minPosition = getPosition(minVal);
+  const maxPosition = 100 - getPosition(maxVal);
 
   return (
     <div className="w-full flex items-center gap-2">
@@ -157,3 +170,16 @@ export const Range: React.FC<RangeProps> = ({
     </div>
   );
 };
+
+
+export function SkeletonRange() {
+  return (
+    <div className="relative animate-pulse mx-14 p-2">
+      <div className="h-1.5 w-full bg-gray-300 rounded"></div>
+      <div className="w-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex justify-between">
+        <div className="size-6 bg-gray-300 rounded-full"></div>
+        <div className="size-6 bg-gray-300 rounded-full"></div>
+      </div>
+    </div>
+  );
+}

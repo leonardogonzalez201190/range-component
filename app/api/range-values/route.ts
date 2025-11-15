@@ -1,16 +1,24 @@
 import { NextResponse } from "next/server";
 
 // Generate an array of unique random numbers
-const generateRandomValues = (count = 7, min = 0, max = 100): number[] => {
-  const values: number[] = [];
-  while (values.length < count) {
-    const rand = Math.floor(Math.random() * (max - min + 1)) + min;
-    if (!values.includes(rand)) values.push(rand);
+const generateUniqueRandoms = (count = 7, min = 0, max = 100): number[] => {
+  const range = max - min + 1;
+
+  if (count > range) {
+    throw new Error("count cannot exceed the range of unique values");
   }
-  return values.sort((a, b) => a - b);
+
+  const pool = Array.from({ length: range }, (_, i) => i + min);
+
+  for (let i = 0; i < count; i++) {
+    const randIndex = i + Math.floor(Math.random() * (range - i));
+    [pool[i], pool[randIndex]] = [pool[randIndex], pool[i]];
+  }
+
+  return pool.slice(0, count).sort((a, b) => a - b);
 };
 
 export async function GET() {
-  const rangeValues = generateRandomValues(7, 1, 100);// Generate 7 random values between 1 and 100
+  const rangeValues = generateUniqueRandoms();
   return NextResponse.json({ rangeValues });
 }
