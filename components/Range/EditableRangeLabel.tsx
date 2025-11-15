@@ -2,19 +2,7 @@
 
 import React, { useState } from "react";
 import { clsx } from "clsx";
-
-interface EditableRangeLabelProps {
-  value: number;
-  unit?: string;
-
-  kind: "min" | "max";
-
-  minLimit?: number;
-  maxLimit?: number;
-
-  readOnly?: boolean;
-  onChange: (newValue: number) => void;
-}
+import { EditableRangeLabelProps } from "./types";
 
 export const EditableRangeLabel: React.FC<EditableRangeLabelProps> = ({
   value,
