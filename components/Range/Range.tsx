@@ -4,8 +4,6 @@ import { EditableRangeLabel } from "./EditableRangeLabel";
 import { validateProps } from "./validations";
 import { RangeProps } from "./types";
 
-
-
 export const Range: React.FC<RangeProps> = ({
   min = 0,
   max = 100,
