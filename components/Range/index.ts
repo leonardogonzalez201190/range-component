@@ -1,4 +1,6 @@
-import { Range, SkeletonRange } from "./Range";
-import { EditableRangeLabel } from "./EditableRangeLabel";
+import { Range } from "./Range";
+import { RangeLabelEditable } from "./RangeLabelEditable";
+import { RangeSkeleton } from "./RangeSkeleton";
+import { RangeErrorsTooltip } from "./RangeErrorsTooltip";
 
-export { Range, SkeletonRange, EditableRangeLabel };
+export { Range, RangeSkeleton, RangeLabelEditable, RangeErrorsTooltip };

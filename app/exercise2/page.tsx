@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Range, SkeletonRange } from "@/components/Range";
+import { Range, RangeSkeleton } from "@/components/Range";
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +26,7 @@ export async function rangeLoader() {
 export default function Page() {
   return (
     <div className="w-full max-w-md mx-auto p-6">
-      <Suspense fallback={<SkeletonRange />}>
+      <Suspense fallback={<RangeSkeleton />}>
         {rangeLoader()}
       </Suspense>
     </div>

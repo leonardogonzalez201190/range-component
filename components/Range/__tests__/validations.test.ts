@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { validateProps } from '../validations';
 
 describe('validateProps', () => {
-  it('should return empty array for valid props', () => {
+  it('should return empty errors array for valid props', () => {
     const props = {
       min: 0,
       max: 100,
@@ -12,7 +12,7 @@ describe('validateProps', () => {
     };
     
     const result = validateProps(props);
-    expect(result).toEqual([]);
+    expect(result.errors).toEqual([]);
   });
 
   it('should detect when min is greater than max', () => {
@@ -24,7 +24,7 @@ describe('validateProps', () => {
     };
     
     const result = validateProps(props);
-    expect(result).toContain('Minimum value cannot be greater than maximum value.');
+    expect(result.errors).toContain('Minimum value cannot be greater than maximum value.');
   });
 
   it('should detect initialMin out of bounds', () => {
@@ -36,7 +36,7 @@ describe('validateProps', () => {
     };
     
     const result = validateProps(props);
-    expect(result).toContain('initialMin must be between 0 and 100.');
+    expect(result.errors).toContain('initialMin must be between 0 and 100.');
   });
 
   it('should detect initialMax out of bounds', () => {
@@ -48,7 +48,7 @@ describe('validateProps', () => {
     };
     
     const result = validateProps(props);
-    expect(result).toContain('initialMax must be between 0 and 100.');
+    expect(result.errors).toContain('initialMax must be between 0 and 100.');
   });
 
   it('should detect when initialMin is greater than initialMax', () => {
@@ -60,7 +60,7 @@ describe('validateProps', () => {
     };
     
     const result = validateProps(props);
-    expect(result).toContain('initialMin cannot be greater than initialMax.');
+    expect(result.errors).toContain('initialMin cannot be greater than initialMax.');
   });
 
   it('should validate values array has at least 2 elements', () => {
@@ -73,7 +73,7 @@ describe('validateProps', () => {
     };
     
     const result = validateProps(props);
-    expect(result).toContain('The values list must contain at least 2 elements.');
+    expect(result.errors).toContain('The values list must contain at least 2 elements.');
   });
 
   it('should validate all values are within min/max range', () => {
@@ -86,7 +86,7 @@ describe('validateProps', () => {
     };
     
     const result = validateProps(props);
-    expect(result).toContain("All values in 'values' must be within the [min, max] range.");
+    expect(result.errors).toContain("All values in 'values' must be within the [min, max] range.");
   });
 
   it('should validate initialMin exists in values when provided', () => {
@@ -99,7 +99,7 @@ describe('validateProps', () => {
     };
     
     const result = validateProps(props);
-    expect(result).toContain('initialMin must exist in \'values\'.');
+    expect(result.errors).toContain('initialMin must exist in \'values\'.');
   });
 
   it('should validate initialMax exists in values when provided', () => {
@@ -112,7 +112,7 @@ describe('validateProps', () => {
     };
     
     const result = validateProps(props);
-    expect(result).toContain('initialMax must exist in \'values\'.');
+    expect(result.errors).toContain('initialMax must exist in \'values\'.');
   });
 
   it('should return multiple errors when multiple validations fail', () => {
@@ -125,6 +125,6 @@ describe('validateProps', () => {
     };
     
     const result = validateProps(props);
-    expect(result.length).toBeGreaterThan(0);
+    expect(result.errors.length).toBeGreaterThan(0);
   });
 });

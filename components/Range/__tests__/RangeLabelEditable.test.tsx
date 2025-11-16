@@ -1,12 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
-import { EditableRangeLabel } from "..";
+import { RangeLabelEditable } from "..";
 
-describe("EditableRangeLabel component", () => {
+describe("RangeLabelEditable component", () => {
   it("renders initial value with unit", () => {
     render(
-      <EditableRangeLabel
+      <RangeLabelEditable
         value={42.1234}
         unit="$"
         kind="min"
@@ -21,7 +21,7 @@ describe("EditableRangeLabel component", () => {
   it("enters edit mode when clicked and not readOnly", async () => {
     const user = userEvent.setup();
     render(
-      <EditableRangeLabel
+      <RangeLabelEditable
         value={50}
         kind="max"
         onChange={() => {}}
@@ -39,7 +39,7 @@ describe("EditableRangeLabel component", () => {
   it("does not enter edit mode when readOnly", async () => {
     const user = userEvent.setup();
     render(
-      <EditableRangeLabel
+      <RangeLabelEditable
         value={30}
         kind="min"
         readOnly
@@ -58,7 +58,7 @@ describe("EditableRangeLabel component", () => {
     const handleChange = vi.fn();
 
     render(
-      <EditableRangeLabel
+      <RangeLabelEditable
         value={10}
         kind="min"
         minLimit={15}
@@ -85,7 +85,7 @@ describe("EditableRangeLabel component", () => {
     const handleChange = vi.fn();
 
     render(
-      <EditableRangeLabel
+      <RangeLabelEditable
         value={20}
         kind="max"
         maxLimit={50}
