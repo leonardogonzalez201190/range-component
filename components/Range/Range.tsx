@@ -8,7 +8,6 @@ import { RangeErrorsTooltip } from "./RangeErrorsTooltip";
 
 export const Range = ({ unit, onChange, ...props }: RangeProps) => {
 
-  // Validations and sanitization
   const {
     errors,
     min,
@@ -28,7 +27,8 @@ export const Range = ({ unit, onChange, ...props }: RangeProps) => {
   const [maxVal, setMaxVal] = useState<number>(initialMax);
   const [activeThumb, setActiveThumb] = useState<"min" | "max" | null>(null);
 
-  const handleMouseDown = (thumb: "min" | "max") => {
+  const handlePointerDown = (thumb: "min" | "max") => (e: React.PointerEvent) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
     setActiveThumb(thumb);
   };
 
@@ -53,17 +53,14 @@ export const Range = ({ unit, onChange, ...props }: RangeProps) => {
     return values[Math.max(0, Math.min(values.length - 1, index))] ?? minVal;
   };
 
+  // POINTER EVENTS drag system (no refs)
   useEffect(() => {
     if (!activeThumb) return;
 
-    const handleMove = (e: MouseEvent | TouchEvent) => {
+    const handleMove = (e: PointerEvent) => {
       if (!rangeRef.current) return;
 
-      const clientX = e instanceof TouchEvent
-        ? e.touches[0]?.clientX
-        : e.clientX;
-
-      if (clientX == null) return;
+      const clientX = e.clientX;
 
       const rect = rangeRef.current.getBoundingClientRect();
       const start = rect.left;
@@ -99,23 +96,16 @@ export const Range = ({ unit, onChange, ...props }: RangeProps) => {
 
     const stop = () => setActiveThumb(null);
 
-    document.addEventListener("mousemove", handleMove);
-    document.addEventListener("mouseup", stop);
-
-    document.addEventListener("touchmove", handleMove, { passive: false });
-    document.addEventListener("touchend", stop);
-    document.addEventListener("touchcancel", stop);
+    document.addEventListener("pointermove", handleMove);
+    document.addEventListener("pointerup", stop);
+    document.addEventListener("pointercancel", stop);
 
     return () => {
-      document.removeEventListener("mousemove", handleMove);
-      document.removeEventListener("mouseup", stop);
-
-      document.removeEventListener("touchmove", handleMove);
-      document.removeEventListener("touchend", stop);
-      document.removeEventListener("touchcancel", stop);
+      document.removeEventListener("pointermove", handleMove);
+      document.removeEventListener("pointerup", stop);
+      document.removeEventListener("pointercancel", stop);
     };
-  }, [activeThumb, min, max, minVal, maxVal, onChange]);
-
+  }, [activeThumb, min, max, values, minVal, maxVal, onChange]);
 
   const getPosition = (value: number): number => {
     if (!values || values.length < 2) {
@@ -130,7 +120,6 @@ export const Range = ({ unit, onChange, ...props }: RangeProps) => {
   const minPosition = getPosition(minVal);
   const maxPosition = getPosition(maxVal);
 
-  // KEYBOARD NAVIGATION
   const handleKey = (
     e: React.KeyboardEvent,
     thumb: "min" | "max"
@@ -152,12 +141,11 @@ export const Range = ({ unit, onChange, ...props }: RangeProps) => {
         break;
 
       default:
-        return; // key not handled
+        return;
     }
 
     e.preventDefault();
 
-    // DISCRETE MODE (with values array)
     if (values && values.length > 1) {
       const index = values.indexOf(currentValue);
 
@@ -175,7 +163,6 @@ export const Range = ({ unit, onChange, ...props }: RangeProps) => {
       return;
     }
 
-    // CONTINUOUS MODE (without values array)
     const applyContinuous = (value: number) => {
       if (isMin) handleMinChange(value);
       else handleMaxChange(value);
@@ -217,11 +204,10 @@ export const Range = ({ unit, onChange, ...props }: RangeProps) => {
             aria-valuemax={maxVal}
             aria-valuenow={minVal}
             onKeyDown={(e) => handleKey(e, "min")}
+            onPointerDown={handlePointerDown("min")}
             className={`absolute w-5 h-5 bg-gray-700 rounded-full -translate-x-1/2 -translate-y-1/2 transition-transform 
             ${activeThumb === "min" ? "scale-150 cursor-grabbing" : "cursor-grab hover:scale-125"}`}
             style={{ left: `${minPosition}%`, top: "50%" }}
-            onMouseDown={() => handleMouseDown("min")}
-            onTouchStart={() => handleMouseDown("min")}
           />
 
           {/* THUMB MAX */}
@@ -233,11 +219,10 @@ export const Range = ({ unit, onChange, ...props }: RangeProps) => {
             aria-valuemax={max}
             aria-valuenow={maxVal}
             onKeyDown={(e) => handleKey(e, "max")}
+            onPointerDown={handlePointerDown("max")}
             className={`absolute w-5 h-5 bg-gray-700 rounded-full -translate-x-1/2 -translate-y-1/2 transition-transform 
             ${activeThumb === "max" ? "scale-150 cursor-grabbing" : "cursor-grab hover:scale-125"}`}
             style={{ left: `${maxPosition}%`, top: "50%" }}
-            onMouseDown={() => handleMouseDown("max")}
-            onTouchStart={() => handleMouseDown("max")}
           />
         </div>
 
