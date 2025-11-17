@@ -56,19 +56,25 @@ export const Range = ({ unit, onChange, ...props }: RangeProps) => {
   useEffect(() => {
     if (!activeThumb) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMove = (e: MouseEvent | TouchEvent) => {
       if (!rangeRef.current) return;
+
+      const clientX = e instanceof TouchEvent
+        ? e.touches[0]?.clientX
+        : e.clientX;
+
+      if (clientX == null) return;
 
       const rect = rangeRef.current.getBoundingClientRect();
       const start = rect.left;
       const width = rect.width;
 
-      let pos = ((e.clientX - start) / width) * 100;
+      let pos = ((clientX - start) / width) * 100;
       pos = Math.max(0, Math.min(100, pos));
 
       let value = min + (pos / 100) * (max - min);
 
-      if (values) value = getClosestValue(e.clientX);
+      if (values) value = getClosestValue(clientX);
 
       if (activeThumb === "min") {
         if (value >= maxVal) {
@@ -91,16 +97,25 @@ export const Range = ({ unit, onChange, ...props }: RangeProps) => {
       }
     };
 
-    const handleMouseUp = () => setActiveThumb(null);
+    const stop = () => setActiveThumb(null);
 
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mousemove", handleMove);
+    document.addEventListener("mouseup", stop);
+
+    document.addEventListener("touchmove", handleMove, { passive: false });
+    document.addEventListener("touchend", stop);
+    document.addEventListener("touchcancel", stop);
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mousemove", handleMove);
+      document.removeEventListener("mouseup", stop);
+
+      document.removeEventListener("touchmove", handleMove);
+      document.removeEventListener("touchend", stop);
+      document.removeEventListener("touchcancel", stop);
     };
   }, [activeThumb, min, max, minVal, maxVal, onChange]);
+
 
   const getPosition = (value: number): number => {
     if (!values || values.length < 2) {
@@ -206,6 +221,7 @@ export const Range = ({ unit, onChange, ...props }: RangeProps) => {
             ${activeThumb === "min" ? "scale-150 cursor-grabbing" : "cursor-grab hover:scale-125"}`}
             style={{ left: `${minPosition}%`, top: "50%" }}
             onMouseDown={() => handleMouseDown("min")}
+            onTouchStart={() => handleMouseDown("min")}
           />
 
           {/* THUMB MAX */}
@@ -221,6 +237,7 @@ export const Range = ({ unit, onChange, ...props }: RangeProps) => {
             ${activeThumb === "max" ? "scale-150 cursor-grabbing" : "cursor-grab hover:scale-125"}`}
             style={{ left: `${maxPosition}%`, top: "50%" }}
             onMouseDown={() => handleMouseDown("max")}
+            onTouchStart={() => handleMouseDown("max")}
           />
         </div>
 
