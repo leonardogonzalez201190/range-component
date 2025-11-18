@@ -207,7 +207,7 @@ export const Range = ({ unit, onChange, ...props }: RangeProps) => {
             onPointerDown={handlePointerDown("min")}
             className={`absolute w-5 h-5 bg-gray-700 rounded-full -translate-x-1/2 -translate-y-1/2 transition-transform 
             ${activeThumb === "min" ? "scale-150 cursor-grabbing" : "cursor-grab hover:scale-125"}`}
-            style={{ left: `${minPosition}%`, top: "50%" }}
+            style={{ left: `${minPosition}%`, top: "50%", touchAction: "none" }}
           />
 
           {/* THUMB MAX */}
@@ -222,7 +222,7 @@ export const Range = ({ unit, onChange, ...props }: RangeProps) => {
             onPointerDown={handlePointerDown("max")}
             className={`absolute w-5 h-5 bg-gray-700 rounded-full -translate-x-1/2 -translate-y-1/2 transition-transform 
             ${activeThumb === "max" ? "scale-150 cursor-grabbing" : "cursor-grab hover:scale-125"}`}
-            style={{ left: `${maxPosition}%`, top: "50%" }}
+            style={{ left: `${maxPosition}%`, top: "50%", touchAction: "none" }}
           />
         </div>
 
