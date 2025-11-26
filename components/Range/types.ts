@@ -59,3 +59,25 @@ export interface ValidatedProps {
   /** Normalized initial maximum value */
   initialMax: number;
 }
+
+/**
+ * Props for the range thumb component
+ */
+export interface RangeThumbProps {
+  /** Position of the thumb in percentage */
+  position: number;
+  /** Current value of the thumb */
+  value: number;
+  /** ARIA label for the thumb */
+  ariaLabel: string;
+  /** Minimum allowed value */
+  ariaMin: number;
+  /** Maximum allowed value */
+  ariaMax: number;
+  /** Callback when pointer down event is triggered */
+  onPointerDown: (e: React.PointerEvent) => void;
+  /** Callback when key down event is triggered */
+  onKeyDown: (e: React.KeyboardEvent) => void;
+  /** Whether the thumb is active */
+  isActive: boolean;
+}

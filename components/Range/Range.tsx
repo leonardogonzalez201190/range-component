@@ -5,6 +5,7 @@ import { RangeLabelEditable } from "./RangeLabelEditable";
 import { validateProps } from "./validations";
 import { RangeProps } from "./types";
 import { RangeErrorsTooltip } from "./RangeErrorsTooltip";
+import { RangeThumb } from "./RangeThumb";
 
 export const Range = ({ unit, onChange, ...props }: RangeProps) => {
 
@@ -174,69 +175,61 @@ export const Range = ({ unit, onChange, ...props }: RangeProps) => {
 
 
   return (
-    <div className="w-full flex flex-col gap-4">
-      <div className="w-full flex items-center gap-2">
+    <div className="w-full flex items-center gap-2">
 
-        <RangeLabelEditable
-          className="w-20 flex justify-end"
-          readOnly={values !== undefined}
-          value={minVal}
-          unit={unit}
-          kind="min"
-          minLimit={min}
-          maxLimit={max}
-          onChange={handleMinChange}
+      <RangeLabelEditable
+        className="w-20 flex justify-end"
+        readOnly={values !== undefined}
+        value={minVal}
+        unit={unit}
+        kind="min"
+        minLimit={min}
+        maxLimit={max}
+        onChange={handleMinChange}
+      />
+
+      <div ref={rangeRef} className="relative h-2 bg-gray-200 rounded-full flex-1 mx-2">
+
+        <div
+          className="absolute h-full bg-gray-700 rounded-full"
+          style={{ left: `${minPosition}%`, right: `${100 - maxPosition}%` }}
         />
 
-        <div ref={rangeRef} className="relative h-2 bg-gray-200 rounded-full flex-1 mx-2">
+        {/* THUMB MIN */}
+        <RangeThumb
+          position={minPosition}
+          value={minVal}
+          ariaLabel="Minimum value"
+          ariaMin={min}
+          ariaMax={maxVal}
+          onKeyDown={(e) => handleKey(e, "min")}
+          onPointerDown={handlePointerDown("min")}
+          isActive={activeThumb === "min"}
+        />
 
-          <div
-            className="absolute h-full bg-gray-700 rounded-full"
-            style={{ left: `${minPosition}%`, right: `${100 - maxPosition}%` }}
-          />
-
-          {/* THUMB MIN */}
-          <div
-            role="slider"
-            tabIndex={0}
-            aria-label="Minimum value"
-            aria-valuemin={min}
-            aria-valuemax={maxVal}
-            aria-valuenow={minVal}
-            onKeyDown={(e) => handleKey(e, "min")}
-            onPointerDown={handlePointerDown("min")}
-            className={`absolute w-5 h-5 bg-gray-700 rounded-full -translate-x-1/2 -translate-y-1/2 transition-transform 
-            ${activeThumb === "min" ? "scale-150 cursor-grabbing" : "cursor-grab hover:scale-125"}`}
-            style={{ left: `${minPosition}%`, top: "50%", touchAction: "none" }}
-          />
-
-          {/* THUMB MAX */}
-          <div
-            role="slider"
-            tabIndex={0}
-            aria-label="Maximum value"
-            aria-valuemin={minVal}
-            aria-valuemax={max}
-            aria-valuenow={maxVal}
-            onKeyDown={(e) => handleKey(e, "max")}
-            onPointerDown={handlePointerDown("max")}
-            className={`absolute w-5 h-5 bg-gray-700 rounded-full -translate-x-1/2 -translate-y-1/2 transition-transform 
-            ${activeThumb === "max" ? "scale-150 cursor-grabbing" : "cursor-grab hover:scale-125"}`}
-            style={{ left: `${maxPosition}%`, top: "50%", touchAction: "none" }}
-          />
-        </div>
-
-        <RangeLabelEditable
-          className="w-20 flex justify-start"
-          readOnly={values !== undefined}
+        {/* THUMB MAX */}
+        <RangeThumb
+          position={maxPosition}
           value={maxVal}
-          unit={unit}
-          kind="max"
-          minLimit={min}
-          maxLimit={max}
-          onChange={handleMaxChange}
+          ariaLabel="Maximum value"
+          ariaMin={minVal}
+          ariaMax={max}
+          onKeyDown={(e) => handleKey(e, "max")}
+          onPointerDown={handlePointerDown("max")}
+          isActive={activeThumb === "max"}
         />
       </div>
+
+      <RangeLabelEditable
+        className="w-20 flex justify-start"
+        readOnly={values !== undefined}
+        value={maxVal}
+        unit={unit}
+        kind="max"
+        minLimit={min}
+        maxLimit={max}
+        onChange={handleMaxChange}
+      />
     </div>
   );
 };
