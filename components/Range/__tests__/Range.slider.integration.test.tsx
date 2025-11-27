@@ -1,34 +1,21 @@
 /**
- * Integration test:
- * 1. Render Range.
- * 2. Grab the min slider (pointerDown).
- * 3. Move it to the right (pointerMove).
- * 4. Trigger pointerUp.
- * 5. Confirm onChange received updated min value.
+ * Integration tests for Range slider behavior.
+ *
+ * Test 1 — Moving the min thumb updates the min value.
+ * Test 2 — Moving the max thumb into the min thumb causes the MIN to move,
+ *          because the component swaps the active thumb to "min" when overlapping.
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
-import { Range } from '../Range';
+import { fireEvent, render, screen } from "@testing-library/react";
+import { Range } from "../Range";
 
-describe('Range – slider integration', () => {
-  
+describe("Range – slider integration", () => {
   beforeEach(() => {
-    // JSDOM doesn't support pointer capture, mock it
+    // JSDOM doesn't support pointer capture
     Element.prototype.setPointerCapture = () => {};
     Element.prototype.releasePointerCapture = () => {};
-  });
 
-  it('updates min value when dragging the slider', () => {
-    let result: any = null;
-    const handleChange = (...args: any[]) => { result = args; };
-
-    render(<Range min={0} max={100} onChange={handleChange} />);
-
-    const minThumb = screen.getByLabelText('Minimum value');
-
-    fireEvent.pointerDown(minThumb, { clientX: 0, pointerId: 1 });
-
-    // mock bounding box so drag math works
+    // Mock bounding box so drag math works consistently
     Element.prototype.getBoundingClientRect = () => ({
       width: 300,
       height: 10,
@@ -40,12 +27,59 @@ describe('Range – slider integration', () => {
       y: 0,
       toJSON: () => {}
     });
+  });
 
+  it("updates min value when dragging the min thumb", () => {
+    let result: any = null;
+    const handleChange = (...args: any[]) => {
+      result = args;
+    };
+
+    render(<Range min={0} max={100} onChange={handleChange} />);
+
+    const minThumb = screen.getByLabelText("Minimum value");
+
+    fireEvent.pointerDown(minThumb, { clientX: 0, pointerId: 1 });
     fireEvent.pointerMove(document, { clientX: 200, pointerId: 1 });
     fireEvent.pointerUp(document, { pointerId: 1 });
 
     expect(result).not.toBeNull();
     expect(result[0]).toBeGreaterThan(0);
-    console.log(result);
+  });
+
+  /**
+   * IMPORTANT:
+   * According to the component logic,
+   * when the MAX thumb is dragged into or past the MIN thumb,
+   * the active thumb switches to "min" and the MIN thumb moves.
+   * The max value does NOT move in this case.
+   */
+  it("moves the min thumb when the max thumb tries to overlap it", () => {
+    let result: any = null;
+    const handleChange = (...args: any[]) => {
+      result = args;
+    };
+
+    render(<Range min={0} max={100} onChange={handleChange} />);
+
+    const minThumb = screen.getByLabelText("Minimum value");
+    const maxThumb = screen.getByLabelText("Maximum value");
+
+    // Move MIN to roughly the middle
+    fireEvent.pointerDown(minThumb, { clientX: 0, pointerId: 1 });
+    fireEvent.pointerMove(document, { clientX: 150, pointerId: 1 }); // ~50% of width
+    fireEvent.pointerUp(document, { pointerId: 1 });
+
+    // Attempt to drag MAX to the left past the MIN position
+    fireEvent.pointerDown(maxThumb, { clientX: 300, pointerId: 2 });
+    fireEvent.pointerMove(document, { clientX: 150, pointerId: 2 }); // left side
+    fireEvent.pointerUp(document, { pointerId: 2 });
+
+    const newMin = result[0];
+    const newMax = result[1];
+
+    // ✔ Min should be less than max
+    expect(newMin).toBeLessThan(newMax);
+   
   });
 });
